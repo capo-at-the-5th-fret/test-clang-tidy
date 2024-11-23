@@ -3,6 +3,11 @@
 #include "caff/cmath.h"
 //#include "caff/type_list.h"
 
+TEST_CASE("foo", "[cmath]")
+{
+    CHECK(caff::foo(1) == 123);
+}
+
 namespace
 {
     // clang-format off
