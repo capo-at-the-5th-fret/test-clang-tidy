@@ -3,6 +3,7 @@
 #include <cmath>
 #include <tuple>
 #include "caff/extra.h"
+#include "caff/dummy.h"
 
 namespace caff
 {
