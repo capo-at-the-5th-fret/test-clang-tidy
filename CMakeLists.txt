@@ -43,10 +43,12 @@ include(Catch)
 
 add_executable(test_clang_tidy
 
+    cmath_tests.cpp
     sample_tests.cpp
 
 )
 
+target_include_directories(test_clang_tidy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_clang_tidy PRIVATE fmt::fmt Catch2::Catch2WithMain)
 
 catch_discover_tests(test_clang_tidy)
