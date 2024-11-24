@@ -75,56 +75,6 @@ jobs:
   #       working-directory: ./build
   #       run: ctest -C ${{env.BUILD_TYPE}}
 
-  # # Taken from doctest github
-  # coverage:
-  #   runs-on: ubuntu-24.04
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     # - name: Cache
-  #     #   uses: actions/cache@v4
-  #     #   with:
-  #     #     path: |
-  #     #       ~/vcpkg
-  #     #       ~/.cache/vcpkg/archives
-  #     #     key: ${{ runner.os }}-vcpkg-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt', './vcpkg.json') }}
-  #     #     restore-keys: |
-  #     #       ${{ runner.os }}-vcpkg-${{ env.BUILD_TYPE }}-
-
-  #     - name: Install C++ Tools
-  #       run: sudo apt-get install -y ninja-build lcov
-
-  #     # # Reference: https://github.com/aminya/setup-cpp
-  #     # - name: Install vcpkg
-  #     #   uses: aminya/setup-cpp@v1
-  #     #   with:
-  #     #     vcpkg: true
-
-  #     # - name: Install vcpkg dependencies
-  #     #   run: vcpkg install fmt catch2
-
-  #     - name: Configure CMake
-  #       run: cmake -B ./build -G "Ninja Multi-Config" -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"
-
-  #     - name: Build
-  #       run: cmake --build ./build --config Release
-
-  #     - name: Test
-  #       run: ctest --test-dir ./build --no-tests=error
-
-  #     - name: LCOV
-  #       run: |
-  #         mkdir coverage
-  #         lcov -c -d ./build/ -o coverage/lcov.info --include "*include/caff*"
-
-  #     - name: Codecov
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         token: ${{ secrets.CODECOV_TOKEN }}
-  #         files: ./coverage/lcov.info
-  #         fail_ci_if_error: true
-
   vcpkg:
     runs-on: ubuntu-24.04
     steps:
@@ -151,6 +101,48 @@ jobs:
       - name: Install vcpkg dependencies
         run: vcpkg install ${{ env.CACHE_VCPKG_LIBRARIES }}
         #run: vcpkg install fmt catch2
+
+  # # Taken from doctest github
+  coverage:
+    needs: vcpkg
+    runs-on: ubuntu-24.04
+
+    env:
+      BUILD_TYPE: Debug
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: vcpkg cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/vcpkg
+          key: ${{ runner.os }}-vcpkg-${{ env.CACHE_VCPKG_LIBRARIES_HASH }}
+
+      - name: Install C++ Tools
+        run: sudo apt-get install -y ninja-build lcov
+
+      - name: Configure CMake
+        run: cmake -B ./build -G "Ninja Multi-Config" -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+      - name: Build
+        run: cmake --build ./build --config ${{ env.BUILD_TYPE }}
+
+      - name: Test
+        run: ctest --test-dir ./build --no-tests=error
+
+      - name: LCOV
+        run: |
+          mkdir coverage
+          lcov -c -d ./build/ -o coverage/lcov.info --include "*include/caff*"
+
+      - name: Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
 
   # Taken from doctest github
   clang-tidy:
