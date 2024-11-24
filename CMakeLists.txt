@@ -24,6 +24,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(fmt)
 
+enable_testing()
+
 # Tags: https://github.com/catchorg/Catch2/tags
 # Linkage: target_link_libraries(Catch2::Catch2WithMain or Catch2::Catch2)
 set(NEEDED_Catch2_VERSION "3.7.0")
