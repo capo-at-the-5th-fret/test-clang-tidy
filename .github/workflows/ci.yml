@@ -131,6 +131,12 @@ jobs:
         id: libraries
         run: echo "libraries=fmt catch2" >> $GITHUB_ENV
 
+      - name: Generate hash for libraries
+        id: generate-hash
+        run: |
+          HASH=$(echo -n "${{ env.libraries }}" | sha256sum | cut -d' ' -f1)
+          echo "libraries_hash=${HASH}" >> $GITHUB_ENV
+
       - name: vcpkg cache
         uses: actions/cache@v4
         with:
@@ -138,7 +144,7 @@ jobs:
             ~/vcpkg
             ~/.cache/vcpkg/archives
           key:
-              ${{ runner.os }}-vcpkg-${{ env.libraries }}
+              ${{ runner.os }}-vcpkg-${{ env.libraries_hash }}
 
       # Reference: https://github.com/aminya/setup-cpp
       - name: Install vcpkg
@@ -168,7 +174,7 @@ jobs:
           path: |
             ~/vcpkg
             ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-${{ env.libraries }}
+          key: ${{ runner.os }}-vcpkg-${{ env.libraries_hash }}
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
