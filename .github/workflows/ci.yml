@@ -127,15 +127,18 @@ jobs:
   vcpkg:
     runs-on: ubuntu-24.04
     steps:
+      - name: vcpkg libraries
+        id: libraries
+        run: echo "libraries=fmt catch2" >> $GITHUB_ENV
+
       - name: vcpkg cache
         uses: actions/cache@v4
         with:
           path: |
             ~/vcpkg
             ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg
-          restore-keys: |
-            ${{ runner.os }}-vcpkg
+          key:
+              ${{ runner.os }}-vcpkg-${{ env.libraries }}
 
       # Reference: https://github.com/aminya/setup-cpp
       - name: Install vcpkg
@@ -144,7 +147,8 @@ jobs:
           vcpkg: true
 
       - name: Install vcpkg dependencies
-        run: vcpkg install fmt catch2
+        run: vcpkg install ${{ env.libraries }}
+        #run: vcpkg install fmt catch2
 
   # Taken from doctest github
   clang-tidy:
@@ -164,9 +168,7 @@ jobs:
           path: |
             ~/vcpkg
             ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg
-          restore-keys: |
-            ${{ runner.os }}-vcpkg
+          key: ${{ runner.os }}-vcpkg-${{ env.libraries }}
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
