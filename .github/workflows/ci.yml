@@ -16,13 +16,14 @@ on:
       - develop
 
 env:
-  BUILD_TYPE: Release
   SCCACHE_GHA_ENABLED: "true"
 
 jobs:
   # build-and-test:
   #   name: ${{ matrix.config.os }} ${{ matrix.config.compiler }}
   #   runs-on: ${{ matrix.config.os }}
+  #   env:
+  #     BUILD_TYPE: Release
   #   strategy:
   #     fail-fast: false
   #     matrix:
@@ -123,41 +124,43 @@ jobs:
   #         files: ./coverage/lcov.info
   #         fail_ci_if_error: true
 
-  # Taken from doctest github
-  clang-tidy:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+  vcpkg:
     runs-on: ubuntu-24.04
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache
+      - name: vcpkg cache
         uses: actions/cache@v4
         with:
           path: |
             ~/vcpkg
             ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt', './vcpkg.json') }}
+          key: ${{ runner.os }}-vcpkg
           restore-keys: |
-            ${{ runner.os }}-vcpkg-${{ env.BUILD_TYPE }}-
+            ${{ runner.os }}-vcpkg
+
+      - name: Install dependencies with vcpkg
+        run: ./vcpkg install fmt catch2
+
+  # Taken from doctest github
+  clang-tidy:
+    needs: vcpkg
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-24.04
+
+    env:
+      BUILD_TYPE: Debug
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
 
-      # Reference: https://github.com/aminya/setup-cpp
-      - name: Install vcpkg
-        uses: aminya/setup-cpp@v1
-        with:
-          vcpkg: true
-
-      - name: Install vcpkg dependencies
-        run: vcpkg install fmt catch2
 
       # -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
       # -warnings-as-errors=*
       # ;-header-filter=include/caff/.*
       - name: Configure CMake
-        run: cmake -B build -S . -G "Ninja Multi-Config" -D CMAKE_CXX_COMPILER=/usr/lib/llvm-18/bin/clang++ -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D CMAKE_CXX_CLANG_TIDY="clang-tidy-18;-header-filter=include/caff/.*" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+        run: cmake -B ./build -S . -G "Ninja Multi-Config" -D CMAKE_CXX_COMPILER=/usr/lib/llvm-18/bin/clang++ -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D CMAKE_CXX_CLANG_TIDY="clang-tidy-18;-header-filter=include/caff/.*" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
 
       - name: Build
-        run: cmake --build build --config Debug
+        run: cmake --build ./build --config ${{ env.BUILD_TYPE }}

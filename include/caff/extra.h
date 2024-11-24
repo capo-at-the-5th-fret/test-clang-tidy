@@ -246,4 +246,3 @@ namespace caff
     concept unsigned_standard_integer =
         is_standard_integer_v<T> && std::is_unsigned_v<T>;
 }
-
