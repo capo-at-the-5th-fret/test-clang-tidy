@@ -137,8 +137,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-vcpkg
 
-      - name: Install dependencies with vcpkg
-        run: ./vcpkg install fmt catch2
+      # Reference: https://github.com/aminya/setup-cpp
+      - name: Install vcpkg
+        uses: aminya/setup-cpp@v1
+        with:
+          vcpkg: true
+
+      - name: Install vcpkg dependencies
+        run: vcpkg install fmt catch2
 
   # Taken from doctest github
   clang-tidy:
@@ -154,7 +160,6 @@ jobs:
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
-
 
       # -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
       # -warnings-as-errors=*
