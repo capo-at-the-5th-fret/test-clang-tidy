@@ -16,6 +16,7 @@ on:
       - develop
 
 env:
+  PROJECT_VCPKG_LIBRARIES: "fmt catch2"
   SCCACHE_GHA_ENABLED: "true"
 
 jobs:
@@ -127,24 +128,19 @@ jobs:
   vcpkg:
     runs-on: ubuntu-24.04
     steps:
-      - name: vcpkg libraries
-        id: libraries
-        run: echo "libraries=fmt catch2" >> $GITHUB_ENV
-
       - name: Generate hash for libraries
         id: generate-hash
         run: |
-          HASH=$(echo -n "${{ env.libraries }}" | sha256sum | cut -d' ' -f1)
-          echo "libraries_hash=${HASH}" >> $GITHUB_ENV
+          HASH=$(echo -n "${{ env.PROJECT_VCPKG_LIBRARIES }}" | sha256sum | cut -d' ' -f1)
+          echo "PROJECT_VCPKG_LIBRARIES_HASH=${HASH}" >> $GITHUB_ENV
 
       - name: vcpkg cache
         uses: actions/cache@v4
         with:
           path: |
             ~/vcpkg
-            ~/.cache/vcpkg/archives
           key:
-              ${{ runner.os }}-vcpkg-${{ env.libraries_hash }}
+              ${{ runner.os }}-vcpkg-${{ env.PROJECT_VCPKG_LIBRARIES_HASH }}
 
       # Reference: https://github.com/aminya/setup-cpp
       - name: Install vcpkg
@@ -153,7 +149,7 @@ jobs:
           vcpkg: true
 
       - name: Install vcpkg dependencies
-        run: vcpkg install ${{ env.libraries }}
+        run: vcpkg install ${{ env.PROJECT_VCPKG_LIBRARIES }}
         #run: vcpkg install fmt catch2
 
   # Taken from doctest github
@@ -173,8 +169,7 @@ jobs:
         with:
           path: |
             ~/vcpkg
-            ~/.cache/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-${{ env.libraries_hash }}
+          key: ${{ runner.os }}-vcpkg-${{ env.PROJECT_VCPKG_LIBRARIES_HASH }}
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
