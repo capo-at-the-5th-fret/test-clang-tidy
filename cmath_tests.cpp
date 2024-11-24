@@ -1,6 +1,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include "caff/cmath.h"
+#include <fmt/core.h>
 //#include "caff/type_list.h"
 
 TEST_CASE("foo", "[cmath]")
@@ -126,8 +127,8 @@ TEMPLATE_LIST_TEST_CASE("evenly_divisible", "[cmath][even_divisible]",
             { x_type{ 6 }, y_type{ 3 }, true }
         }));
 
-        printf("%d (%s) %d (%s) %d\n", x, typeid(x_type).name(), y,
-            typeid(y_type).name(),expected);
+        fmt::println("{} ({}) {} ({}) {}", x, typeid(x_type).name(), y,
+            typeid(y_type).name(), expected);
         //CAPTURE(x, y, expected);
         //CHECK(evenly_divisible(x, y) == expected);
         /*if constexpr (std::is_signed_v<TestType>)
